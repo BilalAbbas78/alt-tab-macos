@@ -594,10 +594,8 @@ class TileView: FlippedView {
         return "\(getAppOrAndWindowTitle(window_, mode)) + \(getAppOrAndWindowTitle(partner, mode))"
     }
 
-    /// A pair's two halves must share one fixed-width tile, so the long "app - window title" form drops to the app name.
-    private func splitPairTitleMode() -> ShowTitlesPreference {
-        Preferences.showTitles == .appNameAndWindowTitle ? .appName : Preferences.showTitles
-    }
+    /// A pair's two halves must share one fixed-width tile, so a pair is always titled by its app names.
+    private func splitPairTitleMode() -> ShowTitlesPreference { .appName }
 
     private func getAppOrAndWindowTitle(_ window: Window?, _ mode: ShowTitlesPreference) -> String {
         let appName = window?.application.localizedName

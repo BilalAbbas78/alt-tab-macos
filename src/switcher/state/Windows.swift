@@ -154,7 +154,10 @@ class Windows {
         let candidates = list.filter { $0.shouldShowTheUser && $0.isFullscreen && !$0.isTabbed && !$0.isWindowlessApp }
             .map { SplitViewCandidate(id: $0.id, spaceIds: $0.spaceIds, lastFocusOrder: $0.lastFocusOrder,
                 creationOrder: $0.creationOrder) }
-        let hidden = SplitViewResolver.hiddenIds(candidates)
+        let stable = SwitcherSession.current?.splitKeeperBySpace ?? [:]
+        let keepers = SplitViewResolver.keepers(candidates, stable: stable)
+        SwitcherSession.current?.splitKeeperBySpace = keepers
+        let hidden = SplitViewResolver.hiddenIds(candidates, stable: keepers)
         guard !hidden.isEmpty else { return }
         list.filter { hidden.contains($0.id) }.forEach { $0.shouldShowTheUser = false }
     }

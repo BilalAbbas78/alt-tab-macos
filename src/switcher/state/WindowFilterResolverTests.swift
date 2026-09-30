@@ -226,4 +226,14 @@ final class WindowFilterResolverTests: XCTestCase {
             sv("c", [6], focus: 3), sv("d", [6], focus: 4)])
         XCTAssertEqual(hidden, ["b", "d"])
     }
+
+    func testPinnedKeeperSurvivesFocusReordering() {
+        let candidates = [sv("a", [5], focus: 2), sv("b", [5], focus: 1)]
+        XCTAssertEqual(SplitViewResolver.hiddenIds(candidates, stable: [5: "a"]), ["b"])
+    }
+
+    func testPinnedKeeperIgnoredWhenNoLongerInPair() {
+        let candidates = [sv("b", [5], focus: 1), sv("c", [5], focus: 2)]
+        XCTAssertEqual(SplitViewResolver.hiddenIds(candidates, stable: [5: "a"]), ["c"])
+    }
 }

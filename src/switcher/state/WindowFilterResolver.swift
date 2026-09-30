@@ -63,22 +63,31 @@ struct SplitViewCandidate: Equatable {
 
 /// macOS Split View puts two fullscreen windows in ONE fullscreen Space; an ordinary fullscreen Space holds
 /// exactly one. So 2+ shown, untabbed, fullscreen windows sharing a single Space are a split pair, and the
-/// switcher lists the pair once, as its most recently focused member.
+/// switcher lists the pair once. Focus events keep reordering the pair while the switcher is open, so the
+/// keeper is chosen once (most recently focused) and `stable` pins it for the rest of the session.
 enum SplitViewResolver {
-    static func hiddenIds(_ candidates: [SplitViewCandidate]) -> Set<String> {
+    /// Space id → id of the pair member that keeps its tile.
+    static func keepers(_ candidates: [SplitViewCandidate], stable: [UInt64: String] = [:]) -> [UInt64: String] {
         let singleSpace = candidates.compactMap { c -> (UInt64, SplitViewCandidate)? in
             guard c.spaceIds.count == 1, c.spaceIds[0] != UInt64.max else { return nil }
             return (c.spaceIds[0], c)
         }
-        let groups = Dictionary(grouping: singleSpace, by: { $0.0 }).values.filter { $0.count > 1 }
-        return Set(groups.flatMap { group in
+        let groups = Dictionary(grouping: singleSpace, by: { $0.0 }).filter { $0.value.count > 1 }
+        return groups.compactMapValues { group in
             let members = group.map { $0.1 }
-            let keeper = members.min {
+            if let pinned = stable[group[0].0], members.contains(where: { $0.id == pinned }) { return pinned }
+            return members.min {
                 if $0.lastFocusOrder != $1.lastFocusOrder { return $0.lastFocusOrder < $1.lastFocusOrder }
                 if $0.creationOrder != $1.creationOrder { return $0.creationOrder > $1.creationOrder }
                 return $0.id < $1.id
-            }
-            return members.map { $0.id }.filter { $0 != keeper?.id }
-        })
+            }?.id
+        }
+    }
+
+    static func hiddenIds(_ candidates: [SplitViewCandidate], stable: [UInt64: String] = [:]) -> Set<String> {
+        let kept = Set(keepers(candidates, stable: stable).values)
+        let pairedSpaces = Set(keepers(candidates, stable: stable).keys)
+        return Set(candidates.filter { $0.spaceIds.count == 1 && pairedSpaces.contains($0.spaceIds[0]) && !kept.contains($0.id) }
+            .map { $0.id })
     }
 }

@@ -75,6 +75,8 @@ final class SwitcherSession {
     var visibleWindowCountAtSummon: Int?
     /// Keeps one-per-app tiles from changing identity while discovery, grouping and search settle.
     var representativeByPid = [pid_t: String]()
+    /// Keeps a Split View pair's shown tile from swapping while focus events reorder the pair.
+    var splitKeeperBySpace = [UInt64: String]()
     var searchQuery: String = ""
 
     /// Full-resolution frames for the Preview panel, fetched just-in-time for the selected window and

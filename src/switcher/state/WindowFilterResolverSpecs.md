@@ -97,4 +97,6 @@ Mirrors `WindowFilterResolverTests.swift` 1:1. Each test flips one knob from an 
 - **testFullscreenWindowsOnDifferentSpacesAreNotPaired** — ordinary fullscreen windows, one per Space, are untouched.
 - **testMultiSpaceAndUnresolvedSpaceWindowsAreNotPaired** — windows on several Spaces, or with no resolved Space yet, are never treated as a pair.
 - **testEachPairCollapsesIndependently** — two separate Split View Spaces each collapse to one tile.
+- **testPinnedKeeperSurvivesFocusReordering** — once a pair's tile is chosen, later focus reordering doesn't swap it (no flicker while the switcher is open).
+- **testPinnedKeeperIgnoredWhenNoLongerInPair** — a pinned keeper that left the pair is replaced by the most recently focused member.
 

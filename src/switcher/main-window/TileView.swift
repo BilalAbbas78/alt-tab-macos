@@ -588,8 +588,14 @@ class TileView: FlippedView {
     }
 
     private func getAppOrAndWindowTitle() -> String {
-        let appName = window_?.application.localizedName
-        let windowTitle = window_?.title
+        let own = getAppOrAndWindowTitle(window_)
+        guard let partner = window_?.splitPartner else { return own }
+        return "\(own) + \(getAppOrAndWindowTitle(partner))"
+    }
+
+    private func getAppOrAndWindowTitle(_ window: Window?) -> String {
+        let appName = window?.application.localizedName
+        let windowTitle = window?.title
         if Preferences.showTitles == .appName {
             return appName ?? ""
         } else if Preferences.showTitles == .appNameAndWindowTitle {

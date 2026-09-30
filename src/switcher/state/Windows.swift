@@ -151,15 +151,19 @@ class Windows {
     }
 
     private static func collapseSplitViewPairs() {
+        list.forEach { $0.splitPartner = nil }
         let candidates = list.filter { $0.shouldShowTheUser && $0.isFullscreen && !$0.isTabbed && !$0.isWindowlessApp }
             .map { SplitViewCandidate(id: $0.id, spaceIds: $0.spaceIds, lastFocusOrder: $0.lastFocusOrder,
                 creationOrder: $0.creationOrder) }
-        let stable = SwitcherSession.current?.splitKeeperBySpace ?? [:]
-        let keepers = SplitViewResolver.keepers(candidates, stable: stable)
+        let keepers = SplitViewResolver.keepers(candidates, stable: SwitcherSession.current?.splitKeeperBySpace ?? [:])
         SwitcherSession.current?.splitKeeperBySpace = keepers
         let hidden = SplitViewResolver.hiddenIds(candidates, stable: keepers)
         guard !hidden.isEmpty else { return }
-        list.filter { hidden.contains($0.id) }.forEach { $0.shouldShowTheUser = false }
+        let hiddenWindows = list.filter { hidden.contains($0.id) }
+        hiddenWindows.forEach { partner in
+            partner.shouldShowTheUser = false
+            list.first { $0.id == keepers[partner.spaceIds[0]] }?.splitPartner = partner
+        }
     }
 
     private static func refreshIfWindowShouldBeShownToTheUser(_ window: Window, _ f: WindowFilters) {

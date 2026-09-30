@@ -40,6 +40,8 @@ class Window {
     var thumbnail: CALayerContents? { didSet { tracked.hasThumbnail = thumbnail != nil } }
     var icon: CGImage? { get { application.icon } }
     var shouldShowTheUser = true
+    /// The other half of a Split View pair whose tile this window carries (set by `Windows.collapseSplitViewPairs`).
+    weak var splitPartner: Window?
     /// DERIVED from the `TabGroups` registry (the single owner of group membership): the ordered members of
     /// this window's group, or nil when it's in none. The registry can't hold a group of one, so the
     /// `TabWindow` invariant (non-nil ⇒ ≥ 2 members) holds by construction.

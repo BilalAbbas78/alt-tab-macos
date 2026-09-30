@@ -7,6 +7,8 @@ class TileView: FlippedView {
 
     var window_: Window?
     var thumbnail = LightImageLayer()
+    /// The two windows of a Split View pair, drawn side by side inside `thumbnail` (whose own contents stay empty then).
+    private let splitHalves = [LightImageLayer(), LightImageLayer()]
     var appIcon = LightImageLayer()
     var appIconHighlight = noAnimation { CALayer() }
     var label = TileTitleView(font: Appearance.font)
@@ -126,6 +128,7 @@ class TileView: FlippedView {
         // outlive any single style, so we toggle visibility in `applyCurrentStyle()` instead of
         // conditionally attaching at init time.
         layer!.addSublayer(thumbnail)
+        splitHalves.forEach { thumbnail.addSublayer($0) }
         addSubviews([label, statusIcons])
         setSubviewAbove(windowlessAppIndicator)
         addSubview(dockLabelIcon)
@@ -297,8 +300,10 @@ class TileView: FlippedView {
                 )
             }())
         )
+        splitHalves.forEach { $0.isHidden = true }
         if !thumbnail.isHidden {
-            if let screenshot = element.thumbnail {
+            if updateSplitThumbnail(element) {
+            } else if let screenshot = element.thumbnail {
                 thumbnail.contentsGravity = .resize
                 let thumbnailSize = TileView.thumbnailSize(element.size, false)
                 thumbnail.updateContents(screenshot, thumbnailSize)
@@ -586,6 +591,32 @@ class TileView: FlippedView {
             return (thumbnail.frame.maxY - windowlessAppIndicator.frame.height + verticalOffset).rounded()
         }
         return (appIcon.frame.maxY - windowlessAppIndicator.frame.height + verticalOffset).rounded()
+    }
+
+    /// Draws a Split View pair as its two windows side by side, left window on the left, each at its real
+    /// proportion. False (and nothing changed) when the window has no partner or either screenshot is missing.
+    private func updateSplitThumbnail(_ element: Window) -> Bool {
+        guard let partner = element.splitPartner, let shot = element.thumbnail, let partnerShot = partner.thumbnail,
+              let size = element.size, let partnerSize = partner.size, let position = element.position,
+              let partnerPosition = partner.position else { return false }
+        let pairs = position.x <= partnerPosition.x
+            ? [(shot, size), (partnerShot, partnerSize)] : [(partnerShot, partnerSize), (shot, size)]
+        let totalWidth = pairs.reduce(0) { $0 + $1.1.width }
+        let maxHeight = pairs.map { $1.height }.max() ?? 1
+        let thumbnailSize = TileView.thumbnailSize(NSSize(width: totalWidth, height: maxHeight), false)
+        thumbnail.releaseImage()
+        thumbnail.updateContents(.cgImage(nil), thumbnailSize)
+        var x = CGFloat(0)
+        for (half, (contents, windowSize)) in zip(splitHalves, pairs) {
+            let scale = thumbnailSize.width / totalWidth
+            let halfSize = NSSize(width: (windowSize.width * scale).rounded(), height: (windowSize.height * scale).rounded())
+            half.isHidden = false
+            half.contentsGravity = .resize
+            half.updateContents(contents, halfSize)
+            half.frame.origin = NSPoint(x: x, y: thumbnailSize.height - halfSize.height)
+            x += halfSize.width
+        }
+        return true
     }
 
     private func getAppOrAndWindowTitle() -> String {

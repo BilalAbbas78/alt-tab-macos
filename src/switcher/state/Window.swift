@@ -232,15 +232,24 @@ class Window {
         return WindowElementAcquisition.element(for: wid, pid: application.pid, route: .otherSpaceViaBruteForce)
     }
 
+    private var isInSplitPair: Bool {
+        splitPartner != nil || Windows.list.contains { $0.splitPartner === self }
+    }
+
     func refreshThumbnail(_ screenshot: CALayerContents) {
         // a frame the OS drew mid-animation is much smaller than this window: keep the previous thumbnail,
         // stale but correct, while another capture is asked for (`WindowThumbnails.acceptCapture`)
         guard WindowThumbnails.acceptCapture(self, screenshot) else { return }
         thumbnail = screenshot
-        if !SwitcherSession.isActive || !shouldShowTheUser { return }
+        if !SwitcherSession.isActive { return }
+        if isInSplitPair {
+            // a pair's tile draws both screenshots in one thumbnail, so either one changing repaints the tile
+            App.refreshOpenUiAfterExternalEvent([])
+        }
+        if !shouldShowTheUser { return }
         if let position = self.position, let size = self.size,
            let view = (TilesView.recycledViews.first { $0.window_?.cgWindowId == cgWindowId }) {
-            if !view.thumbnail.isHidden {
+            if !view.thumbnail.isHidden && !isInSplitPair {
                 let thumbnailSize = TileView.thumbnailSize(size, false)
                 let newSize = thumbnailSize.width != view.thumbnail.frame.width || thumbnailSize.height != view.thumbnail.frame.height
                 view.thumbnail.updateContents(screenshot, thumbnailSize)

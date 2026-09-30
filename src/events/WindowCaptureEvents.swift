@@ -254,6 +254,7 @@ class WindowCaptureScreenshots {
                 if let position = window.position, let size = window.size {
                     PreviewPanel.updateIfShowing(wid, contents, position, size)
                 }
+                if Windows.selectedWindow()?.splitPartner?.cgWindowId == wid { WindowThumbnails.previewSelectedIfNeeded() }
             } else {
                 window.refreshThumbnail(contents)
             }

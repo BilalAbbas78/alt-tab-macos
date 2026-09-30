@@ -14,10 +14,19 @@ enum WindowThumbnails {
            let preview = session.previewFrame(id) ?? window.thumbnail,
            let position = window.position,
            let size = window.size {
-            PreviewPanel.show(id, preview, position, size)
+            PreviewPanel.show(id, preview, position, size, partner: splitPartnerPreview(window, session))
         } else {
             PreviewPanel.hide()
         }
+    }
+
+    /// The Split View partner's frame, or nil until its capture lands (`fetchPreviewFrames` then re-runs the show).
+    private static func splitPartnerPreview(_ window: Window, _ session: SwitcherSession)
+        -> (id: CGWindowID, preview: CALayerContents, position: CGPoint, size: CGSize)? {
+        guard let partner = window.splitPartner, let id = partner.cgWindowId,
+              let preview = session.previewFrame(id) ?? partner.thumbnail,
+              let position = partner.position, let size = partner.size else { return nil }
+        return (id, preview, position, size)
     }
 
     /// ≤1 background capture of a given focused window per 800ms.
@@ -188,7 +197,8 @@ enum WindowThumbnails {
         guard #available(macOS 26.0, *), let session = SwitcherSession.current,
               ScreenRecordingPermission.status == .granted, !ScreenLockEvents.isScreenLocked,
               Preferences.effectivePreviewSelectedWindow(session.shortcutIndex) else { return }
-        let missingIds = Windows.selectedNeighborhoodIds().filter { !session.hasPreviewFrame($0) && !restoringWids.contains($0) }
+        let partnerId = Windows.selectedWindow()?.splitPartner?.cgWindowId
+        let missingIds = Windows.selectedNeighborhoodIds().union(partnerId.map { [$0] } ?? []).filter { !session.hasPreviewFrame($0) && !restoringWids.contains($0) }
         guard !missingIds.isEmpty else { return }
         let windowsToFetch = Windows.list.filter { $0.cgWindowId.map { missingIds.contains($0) } ?? false }
         let selectedId = Windows.selectedWindow()?.cgWindowId

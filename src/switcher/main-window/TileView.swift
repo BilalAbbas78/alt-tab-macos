@@ -397,7 +397,8 @@ class TileView: FlippedView {
             guard let span else { return [] }
             return [NSRange(location: offset + span.lowerBound, length: span.count)]
         }
-        switch Preferences.showTitles {
+        let mode = window_?.splitPartner == nil ? Preferences.showTitles : splitPairTitleMode()
+        switch mode {
         case .appName:
             return range(window_?.swAppMatchSpan)
         case .appNameAndWindowTitle:
@@ -588,17 +589,22 @@ class TileView: FlippedView {
     }
 
     private func getAppOrAndWindowTitle() -> String {
-        let own = getAppOrAndWindowTitle(window_)
-        guard let partner = window_?.splitPartner else { return own }
-        return "\(own) + \(getAppOrAndWindowTitle(partner))"
+        guard let partner = window_?.splitPartner else { return getAppOrAndWindowTitle(window_, Preferences.showTitles) }
+        let mode = splitPairTitleMode()
+        return "\(getAppOrAndWindowTitle(window_, mode)) + \(getAppOrAndWindowTitle(partner, mode))"
     }
 
-    private func getAppOrAndWindowTitle(_ window: Window?) -> String {
+    /// A pair's two halves must share one fixed-width tile, so the long "app - window title" form drops to the app name.
+    private func splitPairTitleMode() -> ShowTitlesPreference {
+        Preferences.showTitles == .appNameAndWindowTitle ? .appName : Preferences.showTitles
+    }
+
+    private func getAppOrAndWindowTitle(_ window: Window?, _ mode: ShowTitlesPreference) -> String {
         let appName = window?.application.localizedName
         let windowTitle = window?.title
-        if Preferences.showTitles == .appName {
+        if mode == .appName {
             return appName ?? ""
-        } else if Preferences.showTitles == .appNameAndWindowTitle {
+        } else if mode == .appNameAndWindowTitle {
             if appName == windowTitle {
                 return appName ?? ""
             }

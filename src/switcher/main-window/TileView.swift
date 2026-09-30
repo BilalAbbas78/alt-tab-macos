@@ -591,7 +591,7 @@ class TileView: FlippedView {
     private func getAppOrAndWindowTitle() -> String {
         guard let partner = window_?.splitPartner else { return getAppOrAndWindowTitle(window_, Preferences.showTitles) }
         let mode = splitPairTitleMode()
-        return "\(getAppOrAndWindowTitle(window_, mode)) + \(getAppOrAndWindowTitle(partner, mode))"
+        return "\(getAppOrAndWindowTitle(window_, mode))+\(getAppOrAndWindowTitle(partner, mode))"
     }
 
     /// A pair's two halves must share one fixed-width tile, so a pair is always titled by its app names.

@@ -91,3 +91,10 @@ Mirrors `WindowFilterResolverTests.swift` 1:1. Each test flips one knob from an 
 ### J. Combinations
 - **testAllFiltersOnAndWindowPassesEachShows** — every filter on, a window that satisfies all of them shows.
 - **testPhantomBeatsWindowlessShow** — `isPhantom` overrides the windowless "show" path.
+
+### K. Split View pairs
+- **testSplitPairKeepsMostRecentlyFocused** — two fullscreen windows sharing one Space (macOS Split View) list once, as the most recently focused one.
+- **testFullscreenWindowsOnDifferentSpacesAreNotPaired** — ordinary fullscreen windows, one per Space, are untouched.
+- **testMultiSpaceAndUnresolvedSpaceWindowsAreNotPaired** — windows on several Spaces, or with no resolved Space yet, are never treated as a pair.
+- **testEachPairCollapsesIndependently** — two separate Split View Spaces each collapse to one tile.
+

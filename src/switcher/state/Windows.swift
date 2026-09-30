@@ -121,6 +121,7 @@ class Windows {
             refreshIfWindowShouldBeShownToTheUser(window, filters)
         }
         refreshWhichWindowsToShowTheUser()
+        collapseSplitViewPairs()
         sort()
         return true
     }
@@ -147,6 +148,15 @@ class Windows {
             }
             windows.filter { $0.id != representativeId }.forEach { $0.shouldShowTheUser = false }
         }
+    }
+
+    private static func collapseSplitViewPairs() {
+        let candidates = list.filter { $0.shouldShowTheUser && $0.isFullscreen && !$0.isTabbed && !$0.isWindowlessApp }
+            .map { SplitViewCandidate(id: $0.id, spaceIds: $0.spaceIds, lastFocusOrder: $0.lastFocusOrder,
+                creationOrder: $0.creationOrder) }
+        let hidden = SplitViewResolver.hiddenIds(candidates)
+        guard !hidden.isEmpty else { return }
+        list.filter { hidden.contains($0.id) }.forEach { $0.shouldShowTheUser = false }
     }
 
     private static func refreshIfWindowShouldBeShownToTheUser(_ window: Window, _ f: WindowFilters) {

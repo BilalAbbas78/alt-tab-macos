@@ -53,3 +53,32 @@ enum WindowFilterResolver {
         visibleSpaceIds.contains { visibleSpace in s.spaceIds.contains { $0 == visibleSpace } }
     }
 }
+
+struct SplitViewCandidate: Equatable {
+    let id: String
+    let spaceIds: [UInt64]          // CGSSpaceID === UInt64
+    let lastFocusOrder: Int
+    let creationOrder: Int
+}
+
+/// macOS Split View puts two fullscreen windows in ONE fullscreen Space; an ordinary fullscreen Space holds
+/// exactly one. So 2+ shown, untabbed, fullscreen windows sharing a single Space are a split pair, and the
+/// switcher lists the pair once, as its most recently focused member.
+enum SplitViewResolver {
+    static func hiddenIds(_ candidates: [SplitViewCandidate]) -> Set<String> {
+        let singleSpace = candidates.compactMap { c -> (UInt64, SplitViewCandidate)? in
+            guard c.spaceIds.count == 1, c.spaceIds[0] != UInt64.max else { return nil }
+            return (c.spaceIds[0], c)
+        }
+        let groups = Dictionary(grouping: singleSpace, by: { $0.0 }).values.filter { $0.count > 1 }
+        return Set(groups.flatMap { group in
+            let members = group.map { $0.1 }
+            let keeper = members.min {
+                if $0.lastFocusOrder != $1.lastFocusOrder { return $0.lastFocusOrder < $1.lastFocusOrder }
+                if $0.creationOrder != $1.creationOrder { return $0.creationOrder > $1.creationOrder }
+                return $0.id < $1.id
+            }
+            return members.map { $0.id }.filter { $0 != keeper?.id }
+        })
+    }
+}

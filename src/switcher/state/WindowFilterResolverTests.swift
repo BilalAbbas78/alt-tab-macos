@@ -201,4 +201,29 @@ final class WindowFilterResolverTests: XCTestCase {
         XCTAssertFalse(WindowFilterResolver.shouldShow(ws(isPhantom: true, isWindowlessApp: true), appState(),
                                                        hideWindowless: false, isOnPreferredScreen: true))
     }
+
+    // MARK: - K. Split View pairs
+
+    private func sv(_ id: String, _ spaces: [UInt64], focus: Int = 0, created: Int = 0) -> SplitViewCandidate {
+        SplitViewCandidate(id: id, spaceIds: spaces, lastFocusOrder: focus, creationOrder: created)
+    }
+
+    func testSplitPairKeepsMostRecentlyFocused() {
+        XCTAssertEqual(SplitViewResolver.hiddenIds([sv("a", [5], focus: 2), sv("b", [5], focus: 1)]), ["a"])
+    }
+
+    func testFullscreenWindowsOnDifferentSpacesAreNotPaired() {
+        XCTAssertTrue(SplitViewResolver.hiddenIds([sv("a", [5]), sv("b", [6])]).isEmpty)
+    }
+
+    func testMultiSpaceAndUnresolvedSpaceWindowsAreNotPaired() {
+        XCTAssertTrue(SplitViewResolver.hiddenIds([sv("a", [5, 6]), sv("b", [5, 6]),
+            sv("c", [UInt64.max]), sv("d", [UInt64.max])]).isEmpty)
+    }
+
+    func testEachPairCollapsesIndependently() {
+        let hidden = SplitViewResolver.hiddenIds([sv("a", [5], focus: 1), sv("b", [5], focus: 2),
+            sv("c", [6], focus: 3), sv("d", [6], focus: 4)])
+        XCTAssertEqual(hidden, ["b", "d"])
+    }
 }

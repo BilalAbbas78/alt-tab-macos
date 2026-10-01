@@ -524,11 +524,7 @@ class App: AppCenterApplication {
             startingUpdater: false,
             updaterDelegate: App.sparkleDelegate!,
             userDriverDelegate: nil)
-        #if DEBUG
-        if !Preferences.qaPristine {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 30) { App.updaterController?.startUpdater() }
-        }
-        #else
+        #if !DEBUG
         DispatchQueue.main.asyncAfter(deadline: .now() + 30) { App.updaterController?.startUpdater() }
         #endif
         PreferencesEvents.initialize()

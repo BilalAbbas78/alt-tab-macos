@@ -536,7 +536,6 @@ class App: AppCenterApplication {
         }
         #if DEBUG
         QAMenu.shared = QAMenu()
-        QAMenu.shared?.orderFront(nil)
         if QAMenu.openSettingsOnLaunch { App.showSettingsWindow() }
         if QAMenu.graphEnabled { DebugMenu.setEnabled(true) }
         #endif
